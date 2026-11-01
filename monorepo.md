@@ -587,3 +587,70 @@ Connect Access/Records per app at C. Add publication gating. Add cross-app journ
 8. **Add Recognise and Protect** when their product work begins — the monorepo should accept them as new entries, not require a restructure.
 
 The monorepo is the right container. What makes it work is the discipline that has governed the source review: share what is genuinely shared, name what is not, and never let a convenient abstraction override a product distinction.
+
+---
+
+===
+
+---
+
+## set up considerations and path?
+
+Set up the monorepo now
+
+## The real blockers (small, and decisions rather than work)
+
+1. **Where the repository lives.** New repo or existing? Which org? Branch protection? CI secrets? Five minutes of decision, and nothing can commit until it's made.
+2. **The toolchain pins.** Node version, npm version. `.nvmrc` and the `packageManager` field both need concrete values. Five minutes.
+3. **`packages/contracts` v0.1 contents.** This is the only one that needs a considered answer. If it starts as an empty package, the discipline the proposal is about never gets tested. If it starts with invented record shapes, something gets frozen before Access/Records have decided. My suggested first commit: content front-matter schema, session-state shape as currently exposed by `/api/session`, and a stub file named "entitlement shape — TBD" that is deliberately empty. That's a real package, it proves the boundary, and it freezes nothing.
+4. **Four ADRs.** ADR-001 (npm), ADR-002 (topology), ADR-003 (Records as service), ADR-008 (naming and hosts). The other five can be written in parallel with the scaffold because the scaffold's shape is already determined by the proposal.
+
+That's it. Those four decisions plus one day of writing unblock Phase 0.
+
+## The apparent blockers (real, but not Phase 0)
+
+- **Access/Records stable checkpoint.** Blocks Phase 1 (the Prevent port), not Phase 0. The workspace can be scaffolded, contracts can ship v0.1, and an empty Worker can deploy, all without touching shared service code.
+- **Access entitlement shape.** Same — blocks Phase 1 and later. Contracts consumes what `/api/session` returns today and adds entitlement types when Access decides them.
+- **Clarify and Navigate worksheet shapes.** Blocks Phase 2's `WorksheetLayout` extraction. Not Phase 0.
+- **Field-level form-engine decision.** Blocks Phase 2+ and by design waits on the worksheet sketches.
+- **Environment names, binding names, previews configuration.** Deployment configuration decisions that live in `wrangler.jsonc`, not the scaffold. Answer them when you wire the first deploy.
+
+## What Phase 0 actually delivers
+
+The proposal's Phase 0 says "Done when an empty app builds, tests and deploys a guarded static shell through the existing Access pattern, and a contract change is seen by its consumers." That is the right scope, and it's smaller than it sounds.
+
+The **highest-value thing Phase 0 can produce** is a trivial Worker — `apps/prevent/worker` returning 200 and nothing else — deployed through Workers Builds. That single deploy proves:
+
+- the root-directory-per-Worker mapping works;
+- watch paths don't build every Worker on every commit;
+- binding declarations in a named environment actually resolve;
+- the guard runs before asset fallback;
+- Turborepo's affected-only filter correctly scopes the build.
+
+Each of those is a trap that will bite later if it isn't proven now, and none of them require any product code to prove.
+
+## One scaffolding temptation to refuse
+
+**Don't create `apps/recognise` and `apps/protect` as empty placeholders.** They'll rot, git won't track them without content, and their existence would imply planning that hasn't happened. The workspace glob `apps/*` accepts them when they arrive. The first "add a product" should be a real exercise at their phase, not a stub in Phase 0.
+
+Same logic for `packages/ui` and `packages/access-client`: create the *directory* only when a second consumer exists. Leave a line in the ADR saying they're intentionally absent and why.
+
+## Risk of scaffolding now
+
+The real risk is a workspace that looks like progress but contains only empty packages and one trivial Worker. Mitigation is in the definition of "done for Phase 0" above — it must deploy and must demonstrate a contract change reaching consumers. If it does both, it's genuinely useful. If it only does the first, it's ceremony.
+
+The secondary risk: the `apps/*/web` and `apps/*/worker` split as separate workspaces is a specific choice. If it later turns out one workspace per app is simpler, that's a small refactor. Acceptable.
+
+## Recommendation
+
+Scaffold now, but do four things first that afternoon:
+
+1. Choose the repository.
+2. Pin Node and npm.
+3. Decide `packages/contracts` v0.1 contents (content front-matter + current session shape + empty entitlement stub).
+4. Write ADR-001, ADR-002, ADR-003, ADR-008.
+
+Then scaffold, create the four packages, deploy a trivial Prevent Worker, and confirm a contract change reaches its consumers. That's Phase 0 closed with evidence, and it's the point at which you'll know whether the monorepo shape is right before committing real product code to it.
+
+Do not wait for the other five ADRs, the §14 questions, or the Access workstream. Waiting would delay Phase 0 by weeks for decisions that don't affect the workspace's shape.
+
