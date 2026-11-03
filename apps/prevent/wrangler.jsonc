@@ -1,9 +1,16 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
+  "$schema": "../../node_modules/wrangler/config-schema.json",
   "name": "prevent-heart-risk",
   "main": "worker/index.ts",
   "compatibility_date": "2026-07-25",
   "compatibility_flags": ["nodejs_compat"],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "my-prevent",
+      "database_id": "00000000-0000-0000-0000-000000000000"
+    }
+  ],
   "assets": {
     "binding": "ASSETS",
     "directory": "./public"

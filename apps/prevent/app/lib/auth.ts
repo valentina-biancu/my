@@ -36,9 +36,9 @@ export function verifyAccessCode(code: string) {
   const candidate = hashAccessCode(code);
   return (process.env.PREVENT_ACCESS_CODE_HASHES ?? "")
     .split(",")
-    .map((value) => value.trim())
+    .map((value: string) => value.trim())
     .filter(Boolean)
-    .some((expected) => {
+    .some((expected: string) => {
       const a = Buffer.from(candidate);
       const b = Buffer.from(expected);
       return a.length === b.length && timingSafeEqual(a, b);
