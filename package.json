@@ -1,9 +1,26 @@
 {
   "name": "my",
   "private": true,
-  "workspaces": ["apps/*", "packages/*", "tests"],
-  "engines": { "node": ">=24", "npm": ">=11" },
-  "devEngines": { "packageManager": { "name": "npm", "version": ">=11 <12" } },
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "tests"
+  ],
+  "engines": {
+    "node": ">=24",
+    "npm": ">=11"
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "npm",
+      "version": ">=11 <12"
+    }
+  },
+  "allowScripts": {
+    "esbuild": true,
+    "workerd": true,
+    "vinext": true
+  },
   "scripts": {
     "dev": "turbo dev --parallel",
     "typecheck": "turbo typecheck",
