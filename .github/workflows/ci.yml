@@ -14,9 +14,9 @@ jobs:
         with: { node-version-file: .nvmrc, cache: npm }
       # no corepack / packageManager pin — the Node pin determines npm (NAV-001)
       - run: npm ci
-      - run: turbo run typecheck lint test build --filter='...[origin/main]'
+      - run: npx turbo run typecheck lint test build --filter='...[origin/main]'
         if: github.event_name == 'pull_request'
-      - run: turbo run typecheck lint test build
+      - run: npx turbo run typecheck lint test build
         if: github.event_name == 'push'
       - run: npx syncpack lint
       # The trivial apps/navigate filtering shell joined the cruise at the
