@@ -1,0 +1,36 @@
+name: ci
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }        # Turbo affected needs history
+      - uses: actions/setup-node@v4
+        with: { node-version-file: .nvmrc, cache: npm }
+      # no corepack / packageManager pin — the Node pin determines npm (NAV-001)
+      - run: npm ci
+      - run: turbo run typecheck lint test build --filter='...[origin/main]'
+        if: github.event_name == 'pull_request'
+      - run: turbo run typecheck lint test build
+        if: github.event_name == 'push'
+      - run: npx syncpack lint
+      # The trivial apps/navigate filtering shell joined the cruise at the
+      # scaffold commit (Phase 0 Checklist criterion 4) — no wrangler config,
+      # not an adoption. apps/prevent joined at its adoption (Worker Adoption
+      # Runbook §3.6).
+      - run: npx depcruise apps packages --config .dependency-cruiser.cjs
+      - run: npm run verify:secrets
+      - run: npm run verify:bindings
+      - run: npm audit --audit-level=critical
+      # Bundle-size dry-run — enabled for prevent at its adoption, when the
+      # first app with a wrangler config entered the graph (Runbook §3.7).
+      # Further apps join as they are adopted.
+      - name: bundle-size dry-run (prevent)
+        run: npx wrangler deploy --dry-run
+        working-directory: apps/prevent
+        env: { CLOUDFLARE_API_TOKEN: "not-needed-for-dry-run" }

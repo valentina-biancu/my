@@ -1,0 +1,16 @@
+# From NAV-009 (Ownership) — path-specific review; CI checks stay repo-level (NAV-007)
+# Team handles are placeholders — real handles are a Decision Sheet §1 slot.
+/apps/shell/            @shyntesy/platform
+/apps/clarify/          @shyntesy/clarify
+/apps/navigate/         @shyntesy/navigate
+/apps/prevent/          @shyntesy/prevent
+/packages/contracts/    @shyntesy/platform @shyntesy/records
+/packages/design-tokens/ @shyntesy/platform
+/packages/test-support/ @shyntesy/platform
+/packages/content-pipeline/ @shyntesy/platform
+/sites/                 @shyntesy/platform
+/content/shell/         @shyntesy/platform
+/content/clarify/       @shyntesy/clarify
+/content/navigate/      @shyntesy/navigate
+/content/prevent/       @shyntesy/prevent
+/review/                @shyntesy/prevent

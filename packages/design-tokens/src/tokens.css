@@ -1,0 +1,27 @@
+/**
+ * Semantic CSS variables — light/dark, no React components (NAV-009, Package roster).
+ * Consumers: apps/* (SPA themes) and sites/ (NAV-010 block rendering).
+ */
+:root {
+  --color-surface: #ffffff;
+  --color-surface-raised: #f5f5f4;
+  --color-text: #1c1917;
+  --color-text-muted: #57534e;
+  --color-action: #0f766e;
+  --color-action-text: #ffffff;
+  --color-danger: #b91c1c;
+  --space-1: 0.25rem; --space-2: 0.5rem; --space-3: 1rem; --space-4: 1.5rem;
+  --radius-sm: 0.375rem; --radius-md: 0.5rem;
+  --font-sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-surface: #1c1917;
+    --color-surface-raised: #292524;
+    --color-text: #fafaf9;
+    --color-text-muted: #a8a29e;
+    --color-action: #5eead4;
+    --color-action-text: #042f2e;
+    --color-danger: #fca5a5;
+  }
+}

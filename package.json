@@ -1,0 +1,27 @@
+{
+  "name": "my",
+  "private": true,
+  "workspaces": ["apps/*", "packages/*", "tests"],
+  "engines": { "node": ">=24", "npm": ">=11" },
+  "devEngines": { "packageManager": { "name": "npm", "version": ">=11 <12" } },
+  "scripts": {
+    "dev": "turbo dev --parallel",
+    "typecheck": "turbo typecheck",
+    "lint": "turbo lint",
+    "test": "turbo test",
+    "build": "turbo build",
+    "verify:deps": "syncpack lint && depcruise apps packages --config .dependency-cruiser.cjs",
+    "verify:secrets": "node scripts/secrets-grep.mjs",
+    "verify:bindings": "node scripts/verify-bindings.mjs",
+    "verify": "npm run typecheck && npm run lint && npm run test && npm run build && npm run verify:deps && npm run verify:secrets && npm run verify:bindings"
+  },
+  "overrides": {},
+  "devDependencies": {
+    "dependency-cruiser": "^16",
+    "eslint": "^9",
+    "eslint-plugin-import": "^2",
+    "syncpack": "^13",
+    "turbo": "^2",
+    "typescript": "^5"
+  }
+}

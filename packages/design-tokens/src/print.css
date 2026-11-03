@@ -1,0 +1,4 @@
+/** Print styles (NAV-009, Package roster): worksheets print; theme does not. */
+@media print {
+  :root { --color-surface: #fff; --color-text: #000; }
+}

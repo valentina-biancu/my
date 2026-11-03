@@ -1,0 +1,7 @@
+{
+  "name": "@my/content-pipeline",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": { "@my/contracts": "*", "zod": "^3" }
+}

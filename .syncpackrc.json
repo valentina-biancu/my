@@ -1,0 +1,12 @@
+{
+  "lintFormatting": false,
+  "lintSemverRanges": false,
+  "lintVersions": true,
+  "versionGroups": [
+    {
+      "label": "workspace-internal — * specifier per NAV-001 (Disciplines); nothing to cascade",
+      "dependencies": ["@my/**"],
+      "isIgnored": true
+    }
+  ]
+}
