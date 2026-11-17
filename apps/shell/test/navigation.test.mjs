@@ -18,3 +18,39 @@ test('return targets are registry references, not arbitrary URLs',()=>{
  assert.deepEqual(parseRoute('#product/prevent/bundle'),{product:'prevent',purchase:'bundle'});
 });
 test('no eligible purchase grants no paid entry',()=>assert.equal(resolveEntry({product:'prevent'},{items:purchases.filter(p=>p.id==='clarify-ended')}).kind,'ended'));
+
+import {readFileSync} from 'node:fs';
+import vm from 'node:vm';
+import * as model from '../demo/model.mjs';
+function ui(){
+ const handlers={},elements={};
+ const element=key=>elements[key]??=( {innerHTML:'',textContent:'',hidden:false,open:false,focus(){},showModal(){this.open=true;},close(){this.open=false;},addEventListener(event,fn){handlers[key+':'+event]=fn;},getBoundingClientRect(){return {left:100,right:500,top:100,bottom:500};}} );
+ const location={hash:'#home'};
+ const document={querySelector:element,addEventListener(event,fn){handlers[event]=fn;}};
+ const history={pushState(a,b,hash){location.hash=hash;},replaceState(a,b,hash){location.hash=hash;}};
+ const window={scrollTo(){},addEventListener(){}};
+ const source=readFileSync(new URL('../demo/app.mjs',import.meta.url),'utf8').replace(/^import .*\n/,'');
+ vm.runInNewContext(source,{...model,document,location,history,window,Intl,Date});
+ const click=action=>handlers.click({target:{closest:selector=>selector==='[data-action]'?{dataset:{action}}:null}});
+ click('scenario:active');
+ return {handlers,elements,element,location,click};
+}
+test('Records return link and same-hash home link both render home',()=>{
+ const u=ui();u.click('records');assert.equal(u.location.hash,'#records');assert.match(u.element('main').innerHTML,/Your information has its own access/);
+ for(const hash of ['#records','#home']){
+  u.location.hash=hash;u.handlers.click({preventDefault(){},target:{closest:s=>s==='a[href="#home"]'?{}:null}});
+  assert.match(u.element('main').innerHTML,/Your products/);assert.equal(u.location.hash,'#home');
+ }
+});
+test('Compass lists bundle; bundle product switch keeps purchase and renders peer links',()=>{
+ const u=ui();u.element('#compass').onclick();assert.match(u.element('#dialog-body').innerHTML,/bundle:bundle/);
+ u.click('bundle:bundle');assert.match(u.element('#dialog-body').innerHTML,/enter:prevent:bundle/);
+ u.click('enter:prevent:bundle');assert.match(u.element('main').innerHTML,/enter:clarify:bundle/);
+ u.click('enter:clarify:bundle');assert.equal(u.location.hash,'#product/clarify/bundle');assert.match(u.element('main').innerHTML,/enter:navigate:bundle/);
+});
+test('outside press and click close modal; inside click and outward drag do not',()=>{
+ const u=ui(),d=u.element('dialog');const send=(type,x,y)=>u.handlers['dialog:'+type]({target:d,clientX:x,clientY:y});
+ d.showModal();send('pointerdown',150,150);send('click',150,150);assert.equal(d.open,true);
+ send('pointerdown',150,150);send('click',50,50);assert.equal(d.open,true);
+ send('pointerdown',50,50);send('click',50,50);assert.equal(d.open,false);
+});
