@@ -1,0 +1,48 @@
+import {purchases,names,active,resolveEntry,parseRoute} from './model.mjs';
+const main=document.querySelector('main'), dialog=document.querySelector('dialog'), body=document.querySelector('#dialog-body');
+let signedIn=false, available=true, items=purchases, pending=null, selected=null;
+const date=s=>new Intl.DateTimeFormat('en-GB',{dateStyle:'long',timeStyle:'short',timeZone:'UTC'}).format(new Date(s))+' UTC';
+// All interpolated values below are fixed local fixtures, never service responses.
+const button=(text,action,cls='primary')=>`<button class="${cls}" data-action="${action}">${text}</button>`;
+const dates=p=>`<div class="dates"><strong>Access until ${date(p.until)}</strong>Access from ${date(p.from)}</div>`;
+function page(html){main.innerHTML=html;document.querySelector('#signout').hidden=!signedIn;main.focus({preventScroll:true});window.scrollTo(0,0);}
+function modal(title,html){document.querySelector('#dialog-title').textContent=title;body.innerHTML=html;if(!dialog.open)dialog.showModal();}
+function signIn(){page(`<section class="narrow"><p class="eyebrow">My Navigator</p><h1>A familiar place<br>to come back to.</h1><p class="intro">Open your HeartFirst products and find your way forward.</p><div class="card"><h2>Sign in to My Navigator</h2><p>In the connected service, you’ll receive a one-time link by email.</p><p class="muted">This preview sends no email and collects no email address.</p>${button('Try the sign-in journey','email')}</div></section>`);}
+function home(){selected=null;pending=null;if(!signedIn){signIn();return;}if(!available){page(`<section class="narrow"><h1>Your products are unavailable right now.</h1><p class="intro">We could not load your purchases. This does not mean you have no products.</p>${button('Try again','retry')} <a href="#help">Help with access</a></section>`);return;}
+ page(`<section class="hero"><p class="eyebrow">Your HeartFirst space</p><h1>My Navigator</h1><p class="intro">Pick up a product, find what you need, or choose where to go next.</p></section><h2 class="section-label">Your products</h2><div class="cards">${items.map(p=>`<article class="card ${p.id==='bundle'?'bundle':''}"><span class="tag ${active(p)?'':'ended'}">${active(p)?(p.id==='bundle'?'Three products · one purchase':'Available'):'Access ended'}</span><h3>${p.name}</h3>${dates(p)}${active(p)?`<div class="row">${p.products.map(x=>button('Open '+names[x],`enter:${x}:${p.id}`)).join('')}</div>`:'<p>Your paid access has ended. Retained information is separate from product access.</p>'}</article>`).join('')||'<p>No purchases to show in this example.</p>'}</div><section class="support"><div><h3>Your retained information</h3><p>Reading and exporting retained information does not depend on an active product purchase.</p>${button('About records access','records','quiet')}</div><div><h3>Find your way</h3><p>Use the compass at the top of the page to move between destinations.</p><a href="#help">Help with access →</a></div></section>`);
+}
+function enter(target){
+ const r=resolveEntry(target,{signedIn,available,items});
+ if(r.kind==='signin'){pending=target;signIn();return;}
+ if(r.kind==='choose'){modal('Choose your purchase',`<p class="muted">Open ${names[r.product]} using the purchase you choose. Each period stays separate.</p><div class="list">${r.items.map(p=>button(`${p.name}<small>From ${date(p.from)}<br>Until ${date(p.until)}</small>`,`enter:${r.product}:${p.id}`,'')).join('')}</div>`);return;}
+ if(r.kind!=='open'){selected=null;page(`<section class="narrow"><h1>${r.kind==='unavailable'?'We cannot check access right now.':'This entry is no longer available.'}</h1><p class="intro">No other purchase has been selected for you. Return to My Navigator to choose an available entry.</p>${button('Return to My Navigator','home')}</section>`);return;}
+ selected=target;pending=null;history.replaceState(null,'',`#product/${target.product}/${target.purchase}`);
+ page(`<a class="back" href="#home">← My Navigator</a><div class="route-context">${r.purchase.name}<br>Access from ${date(r.purchase.from)}<br>Access until ${date(r.purchase.until)}</div><p class="eyebrow">Product destination preview</p><h1>${names[r.product]}</h1><p class="intro">You arrived through the purchase shown above.</p><div class="notice">This is a navigation demonstration. The product, saved work and Records service are not connected. No work has been created or saved.</div><div class="row">${button('Return to My Navigator','home')}${button('Try session expiry','expire','')}</div>`);
+}
+function compass(){if(!signedIn){signIn();return;}modal('Compass',`${selected?`<p class="muted">Current purchase: ${items.find(p=>p.id===selected.purchase)?.name||'Unavailable'}</p>`:''}<label for="search">Find a destination</label><input id="search" type="search" placeholder="Search products or help"><div class="list" id="destinations">${button('My Navigator','home','')}${Object.keys(names).map(x=>button(names[x],`shortcut:${x}`,'')).join('')}${button('About records access','records','')}${button('Help with access','help','')}</div><p id="no-results" class="muted" hidden>No matching destinations.</p>`);
+ document.querySelector('#search').addEventListener('input',e=>{let n=0;document.querySelectorAll('#destinations button').forEach(b=>{b.hidden=!b.textContent.toLowerCase().includes(e.target.value.toLowerCase());if(!b.hidden)n++;});document.querySelector('#no-results').hidden=n>0;});
+}
+function records(){selected=null;page(`<a class="back" href="#home">← My Navigator</a><section class="narrow"><p class="eyebrow">Your retained information</p><h1>Your information has its own access.</h1><p class="intro">The intended service lets you read and export authorised retained information after product access ends, within the applicable retention policy.</p><div class="notice">Records access and export are not connected in this preview. No personal information is shown or stored here.</div></section>`);}
+function help(){selected=null;page(`<a class="back" href="#home">← My Navigator</a><section class="narrow"><p class="eyebrow">Help with access</p><h1>Come back to<br>My Navigator.</h1><p class="intro">The intended entrance is <strong>my.shyntesy.com</strong>. Sign in there when you return; you do not need to remember a recovery address.</p><p class="intro">The connected service will ask you to confirm your email link before opening My Navigator. This keeps automated email scanners from using it first.</p><div class="notice">This local preview does not change the live Access service or its current links.</div>${button('Return to My Navigator','home')}</section>`);}
+function route(){if(location.hash==='#help'){help();return;}if(location.hash==='#home'||!location.hash){home();return;}const target=parseRoute(location.hash);if(target){enter(target);return;}page(`<h1>This destination is unavailable.</h1>${button('Return to My Navigator','home')}`);}
+function goHome(){history.pushState(null,'','#home');home();}
+document.addEventListener('click',e=>{
+ const action=e.target.closest('[data-action]')?.dataset.action;if(!action)return;dialog.close();
+ if(action==='home')goHome();
+ else if(action==='help'){history.pushState(null,'','#help');help();}
+ else if(action==='email')page(`<section class="narrow"><p class="eyebrow">Email link preview</p><h1>Check your email.</h1><p class="intro">In the connected service, this is where you would open the email link. No email was sent by this preview.</p>${button('Open the example email link','link')}</section>`);
+ else if(action==='link')page(`<section class="narrow"><p class="eyebrow">Secure access · preview</p><h1>Your link is ready.</h1><p class="intro">Continue to ${pending?'your selected product':'My Navigator'}.</p>${button('Continue securely','confirm')}<p class="muted">This confirmation prevents automated email scanners from using your one-time link in the connected service.</p></section>`);
+ else if(action==='confirm'){signedIn=true;if(pending)enter(pending);else goHome();}
+ else if(action==='records'){if(!signedIn)signIn();else records();}
+ else if(action.startsWith('enter:')){const [,product,purchase]=action.split(':');enter({product,purchase});}
+ else if(action.startsWith('shortcut:')){const product=action.split(':')[1];const p=items.find(x=>x.id===selected?.purchase);enter(p?.products.includes(product)?{product,purchase:p.id}:{product});}
+ else if(action==='expire'){pending=selected;signedIn=false;selected=null;signIn();}
+ else if(action==='retry'){available=true;home();}
+ else if(action.startsWith('scenario:')){const s=action.split(':')[1];items=s==='ended'?purchases.filter(p=>!active(p)):purchases;available=s!=='unavailable';signedIn=s!=='signedout';goHome();}
+});
+document.querySelector('#compass').onclick=compass;
+document.querySelector('#close-dialog').onclick=()=>dialog.close();
+document.querySelector('#signout').onclick=()=>{signedIn=false;goHome();};
+document.querySelector('#scenarios').onclick=()=>modal('Try a scenario',`<p class="muted">Examples are fixed at 17 November 2026. Reload resets the preview. No browser storage is used.</p><div class="list">${[['signedout','Start signed out'],['active','Standalone and bundle purchases'],['ended','All product access ended'],['unavailable','Purchase service unavailable']].map(([id,label])=>button(label,'scenario:'+id,'')).join('')}</div>`);
+document.querySelector('.skip').addEventListener('click',e=>{e.preventDefault();main.focus();});
+window.addEventListener('hashchange',route);route();
