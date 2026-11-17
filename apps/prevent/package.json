@@ -19,8 +19,8 @@
     "@my/contracts": "*",
     "drizzle-orm": "0.45.2",
     "next": "16.4.4",
-    "react": "19.2.6",
-    "react-dom": "19.2.6"
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "1.47.0",
@@ -34,7 +34,7 @@
     "drizzle-kit": "0.31.10",
     "eslint": "^9",
     "eslint-config-next": "16.4.4",
-    "react-server-dom-webpack": "19.2.6",
+    "react-server-dom-webpack": "19.3.1",
     "tailwindcss": "4.2.1",
     "typescript": "^5",
     "vinext": "0.0.50",
