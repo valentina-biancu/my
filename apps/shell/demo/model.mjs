@@ -20,6 +20,7 @@ export function resolveEntry(target,{signedIn=true,available=true,items=purchase
 }
 export function parseRoute(hash){
  const parts=hash.replace(/^#/,'').split('/');
+ if(parts.length===2&&parts[0]==='product'&&Object.hasOwn(names,parts[1]))return {product:parts[1]};
  if(parts.length===3&&parts[0]==='product'&&Object.hasOwn(names,parts[1])&&purchases.some(p=>p.id===parts[2]))return {product:parts[1],purchase:parts[2]};
  return null;
 }

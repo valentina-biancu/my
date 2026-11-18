@@ -28,12 +28,12 @@ function ui(){
  const location={hash:'#home'};
  const document={querySelector:element,addEventListener(event,fn){handlers[event]=fn;}};
  const history={pushState(a,b,hash){location.hash=hash;},replaceState(a,b,hash){location.hash=hash;}};
- const window={scrollTo(){},addEventListener(){}};
+ const window={scrollTo(){},addEventListener(event,fn){handlers['window:'+event]=fn;}};
  const source=readFileSync(new URL('../demo/app.mjs',import.meta.url),'utf8').replace(/^import .*\n/,'');
  vm.runInNewContext(source,{...model,document,location,history,window,Intl,Date});
  const click=action=>handlers.click({target:{closest:selector=>selector==='[data-action]'?{dataset:{action}}:null}});
  click('scenario:active');
- return {handlers,elements,element,location,click};
+ return {handlers,elements,element,location,click,document};
 }
 test('Records return link and same-hash home link both render home',()=>{
  const u=ui();u.click('records');assert.equal(u.location.hash,'#records');assert.match(u.element('main').innerHTML,/Your information has its own access/);
@@ -53,4 +53,33 @@ test('outside press and click close modal; inside click and outward drag do not'
  d.showModal();send('pointerdown',150,150);send('click',150,150);assert.equal(d.open,true);
  send('pointerdown',150,150);send('click',50,50);assert.equal(d.open,true);
  send('pointerdown',50,50);send('click',50,50);assert.equal(d.open,false);
+});
+
+test('product-only routes choose purchases; malformed routes stay invalid',()=>{
+ assert.deepEqual(parseRoute('#product/clarify'),{product:'clarify'});
+ assert.equal(parseRoute('#product/unknown'),null);
+ const u=ui();u.location.hash='#product/clarify';u.handlers['window:hashchange']();
+ assert.match(u.element('#dialog-body').innerHTML,/enter:clarify:bundle/);
+ assert.equal(u.document.title,'Choose your purchase · My Navigator');
+});
+test('Records and Compass survive the complete sign-in journey',()=>{
+ for(const destination of ['records','compass']){
+  const u=ui();u.click('scenario:signedout');
+  if(destination==='records'){u.location.hash='#records';u.handlers['window:hashchange']();}
+  else u.element('#compass').onclick();
+  u.click('email');u.click('link');u.click('confirm');
+  if(destination==='records'){assert.equal(u.location.hash,'#records');assert.equal(u.document.title,'Records · My Navigator');}
+  else{assert.equal(u.element('dialog').open,true);assert.equal(u.element('#dialog-title').textContent,'Compass');}
+ }
+});
+test('bottom product navigation respects standalone and bundle purchases',()=>{
+ const u=ui();u.click('enter:prevent:prevent-single');
+ assert.match(u.element('main').innerHTML,/<button disabled aria-current="page">Prevent/);
+ assert.equal(u.document.title,'Prevent heart risk · My Navigator');
+ u.click('shortcut:clarify');assert.equal(u.location.hash,'#product/clarify');
+ assert.match(u.element('#dialog-body').innerHTML,/enter:clarify:bundle/);
+ u.click('enter:clarify:bundle');u.click('shortcut:prevent');
+ assert.equal(u.location.hash,'#product/prevent/bundle');
+ u.click('expire');u.click('email');u.click('link');u.click('confirm');
+ assert.equal(u.location.hash,'#product/prevent/bundle');
 });
