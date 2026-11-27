@@ -7,7 +7,7 @@ function secure(response){
  response.headers.set('Cache-Control','no-store');response.headers.set('Referrer-Policy','no-referrer');response.headers.set('X-Content-Type-Options','nosniff');
  response.headers.set('Content-Security-Policy',"default-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'");return response;
 }
-function html(title,body,status=200){return secure(new Response(`<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escape(title)} · My Navigator</title><main>${body}</main></html>`,{status,headers:{'Content-Type':'text/html; charset=utf-8'}}));}
+function html(title,body,status=200){const response=secure(new Response(`<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escape(title)} · My Navigator</title><main>${body}</main></html>`,{status,headers:{'Content-Type':'text/html; charset=utf-8'}}));response.headers.set('Referrer-Policy','strict-origin');return response;}
 function redirect(location,cookies=[]){const headers=new Headers({Location:location});for(const c of cookies)headers.append('Set-Cookie',c);return secure(new Response(null,{status:303,headers}));}
 function localPath(value,origin){if(typeof value!=='string'||!value.startsWith('/')||value.startsWith('//')||value.includes('\\'))throw Error('invalid_destination');const u=new URL(value,origin);if(u.origin!==origin||u.hash)throw Error('invalid_destination');return u.pathname+u.search;}
 

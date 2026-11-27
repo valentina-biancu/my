@@ -18,15 +18,15 @@ test('signed-out deep links preserve their destination and unknown paths do not 
 
 test('logout GET is a confirmation; POST requires session-bound CSRF and exact origin',async()=>{
  const c=await host(),Cookie='__Host-shyntesy_shell='+token;
- const r=await c.request('/auth/logout',{headers:{Cookie}}),body=await r.text(),csrf=body.match(/name="csrf" value="([^"]+)"/)[1];assert.equal(c.state.revokes,0);
- for(const [o,value] of [['https://access.test',csrf],[origin,'wrong']])assert.equal((await c.request('/auth/logout',{method:'POST',headers:{Origin:o,Cookie},body:new URLSearchParams({csrf:value})})).status,403);
+ const r=await c.request('/auth/logout',{headers:{Cookie}}),body=await r.text(),csrf=body.match(/name="csrf" value="([^"]+)"/)[1];assert.equal(c.state.revokes,0);assert.equal(r.headers.get('Referrer-Policy'),'strict-origin');
+ for(const [o,value] of [['https://access.test',csrf],['null',csrf],[origin,'wrong']])assert.equal((await c.request('/auth/logout',{method:'POST',headers:{Origin:o,Cookie},body:new URLSearchParams({csrf:value})})).status,403);
  assert.equal(c.state.revokes,0);
- const done=await c.request('/auth/logout',{method:'POST',headers:{Origin:origin,Cookie},body:new URLSearchParams({csrf})});assert.equal(done.status,303);assert.equal(c.state.revokes,1);assert.match(done.headers.get('Set-Cookie'),/Max-Age=0/);
+ const done=await c.request('/auth/logout',{method:'POST',headers:{Origin:origin,Cookie},body:new URLSearchParams({csrf})});assert.equal(done.status,303);assert.equal(done.headers.get('Referrer-Policy'),'no-referrer');assert.equal(c.state.revokes,1);assert.match(done.headers.get('Set-Cookie'),/Max-Age=0/);
 });
 
 test('unavailable authority does not render private content or report successful sign-out',async()=>{
  const c=await host();c.state.unavailable=true;
- const r=await c.request('/records',{headers:{Cookie:'__Host-shyntesy_shell='+token}});assert.equal(r.status,403);assert.doesNotMatch(await r.text(),/private fixture/);assert.equal(r.headers.has('Set-Cookie'),false);
+ const r=await c.request('/records',{headers:{Cookie:'__Host-shyntesy_shell='+token}});assert.equal(r.status,403);assert.equal(r.headers.get('Referrer-Policy'),'strict-origin');assert.doesNotMatch(await r.text(),/private fixture/);assert.equal(r.headers.has('Set-Cookie'),false);
 });
 
 test('private adapter requires an injected binding and cannot substitute a public fetch',async()=>{
